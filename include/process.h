@@ -10,7 +10,7 @@ using std::string;
 class Process {
  public:
   Process(const int pid) : pid_(pid) {}
-  int Pid();                               // TODO: See src/process.cpp
+  int Pid() const;                         // TODO: See src/process.cpp
   string User();                           // TODO: See src/process.cpp
   string Command();                        // TODO: See src/process.cpp
   float CpuUtilization() const;            // TODO: See src/process.cpp

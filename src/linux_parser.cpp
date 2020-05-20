@@ -73,8 +73,8 @@ float LinuxParser::MemoryUtilization() {
   string name;
   int value;
   string line;
-  int mem_total{-1};
-  int mem_free{-1};
+  float mem_total{-1};
+  float mem_free{-1};
   std::ifstream stream(kProcDirectory + kMeminfoFilename);
   if (stream.is_open()) {
     while (std::getline(stream, line)) {
@@ -87,7 +87,7 @@ float LinuxParser::MemoryUtilization() {
       }
     }
   }
-  return 1.0 - static_cast<float>(mem_free - mem_total);
+  return 1.0 - (mem_free / mem_total);
 }
 
 // DONE: Read and return the system uptime
@@ -101,7 +101,7 @@ long LinuxParser::UpTime() {
       linestream >> uptime;
     }
   }
-  return uptime / sysconf(_SC_CLK_TCK);
+  return uptime;
 }
 
 // TODO: Read and return the number of jiffies for the system
@@ -123,7 +123,8 @@ float LinuxParser::CpuUtilization() {
   std::ifstream stream(kProcDirectory + kStatFilename);
   string line;
   string name;
-  int user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice;
+  float user, nice, system, idle, iowait, irq, softirq, steal, guest,
+      guest_nice;
   if (stream.is_open()) {
     while (std::getline(stream, line)) {
       std::istringstream linestream(line);
@@ -133,7 +134,7 @@ float LinuxParser::CpuUtilization() {
         const auto Idle = idle + iowait;
         const auto Nonidle = user + nice + system + irq + softirq + steal;
         const auto Total = Idle + Nonidle;
-        result = static_cast<float>(Nonidle / Total);
+        result = Nonidle / Total;
       }
     }
   }
@@ -180,7 +181,8 @@ int LinuxParser::RunningProcesses() {
 // REMOVE: [[maybe_unused]] once you define the function
 string LinuxParser::Command(int pid) {
   string command{"-1"};
-  std::ifstream stream(kProcDirectory + std::to_string(pid) + kCmdlineFilename);
+  string filename(kProcDirectory + std::to_string(pid) + kCmdlineFilename);
+  std::ifstream stream(filename);
   string line;
   if (stream.is_open()) {
     if (std::getline(stream, line)) {
@@ -189,6 +191,27 @@ string LinuxParser::Command(int pid) {
     }
   }
   return command;
+}
+
+float LinuxParser::CpuUtilization(const int pid) {
+  float load{-1.};
+  const auto uptime = UpTime(pid);
+  std::ifstream stream(kProcDirectory + std::to_string(pid) + kStatFilename);
+  string line;
+  float utime, stime, startime;
+  if (stream.is_open()) {
+    while (std::getline(stream, line)) {
+      std::istringstream linestream(line);
+      linestream.seekg(13);
+      linestream >> utime >> stime;
+      const auto total_time = utime + stime;
+      linestream.seekg(21);
+      linestream >> startime;
+      const auto duration = uptime - startime;
+      load = total_time / duration;
+    }
+  }
+  return load;
 }
 
 // DONE: Read and return the memory used by a process

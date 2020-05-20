@@ -3,6 +3,7 @@
 #include <unistd.h>
 
 #include <cstddef>
+#include <iostream>
 #include <set>
 #include <string>
 #include <vector>
@@ -19,7 +20,11 @@ using std::vector;
 System::System() {
   const auto pids = LinuxParser::Pids();
   for (const auto pid : pids) {
-    processes_.emplace_back(pid);
+    Process process(pid);
+    // filter out processes with empty /proc/pid/cmdline
+    if (process.Command() != std::string("-1")) {
+      processes_.push_back(process);
+    }
   }
 }
 

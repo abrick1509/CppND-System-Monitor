@@ -14,10 +14,12 @@ using std::to_string;
 using std::vector;
 
 // DONE: Return this process's ID
-int Process::Pid() { return pid_; }
+int Process::Pid() const { return pid_; }
 
 // DONE: Return this process's CPU utilization
-float Process::CpuUtilization() const { return 0.; }
+float Process::CpuUtilization() const {
+  return LinuxParser::CpuUtilization(pid_);
+}
 
 // DONE: Return the command that generated this process
 string Process::Command() { return LinuxParser::Command(pid_); }
