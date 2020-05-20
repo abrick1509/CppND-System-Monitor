@@ -221,7 +221,7 @@ float LinuxParser::CpuUtilization(int pid) {
 // DONE: Read and return the memory used by a process
 // REMOVE: [[maybe_unused]] once you define the function
 string LinuxParser::Ram(int pid) {
-  string ram{"-1"};
+  float ram{-1.};
   std::ifstream stream(kProcDirectory + std::to_string(pid) + kStatusFilename);
   string line;
   string name;
@@ -232,7 +232,10 @@ string LinuxParser::Ram(int pid) {
       if (name == "VmSize:") break;
     }
   }
-  return ram;
+  std::ostringstream out;
+  out.precision(2);
+  out << std::fixed << ram/1e5;
+  return out.str();
 }
 
 // DONE: Read and return the user ID associated with a process
