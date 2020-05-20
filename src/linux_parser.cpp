@@ -104,6 +104,10 @@ long LinuxParser::UpTime() {
   return uptime;
 }
 
+// I couldn't figure out the exact jiffies thing with Linux, so I decided to
+// just compute the cpu utilization per process in another way, see float
+// LinuxParser::CpuUtilization(int pid)
+
 // TODO: Read and return the number of jiffies for the system
 // long LinuxParser::Jiffies() { return 0; }
 
@@ -193,21 +197,21 @@ string LinuxParser::Command(int pid) {
   return command;
 }
 
-float LinuxParser::CpuUtilization(const int pid) {
+float LinuxParser::CpuUtilization(int pid) {
+  using std::cout;
   float load{-1.};
+  const auto global_uptime = UpTime();
   const auto uptime = UpTime(pid);
   std::ifstream stream(kProcDirectory + std::to_string(pid) + kStatFilename);
   string line;
-  float utime, stime, startime;
+  float utime, stime;
   if (stream.is_open()) {
     while (std::getline(stream, line)) {
       std::istringstream linestream(line);
       linestream.seekg(13);
       linestream >> utime >> stime;
-      const auto total_time = utime + stime;
-      linestream.seekg(21);
-      linestream >> startime;
-      const auto duration = uptime - startime;
+      const auto total_time = (utime + stime) / sysconf(_SC_CLK_TCK);
+      const auto duration = global_uptime - uptime;
       load = total_time / duration;
     }
   }
@@ -284,5 +288,5 @@ long LinuxParser::UpTime(int pid) {
       linestream >> uptime;
     }
   }
-  return uptime;
+  return uptime / sysconf(_SC_CLK_TCK);
 }
