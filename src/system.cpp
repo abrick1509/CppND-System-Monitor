@@ -27,7 +27,7 @@ vector<Process>& System::Processes() {
   constexpr std::size_t noel{10};
   processes_.clear();
   processes_.reserve(noel);
-  std::size_t counter{1};
+  std::size_t counter{0};
   for (const auto pid : pids) {
     Process process(pid);
     // filter out processes with empty /proc/pid/cmdline
@@ -39,6 +39,10 @@ vector<Process>& System::Processes() {
       break;
     }
   }
+  // sort processes based on their cpu utilization
+  std::sort(processes_.begin(), processes_.end());
+  // reverse for decreasing order
+  std::reverse(processes_.begin(), processes_.end());
   return processes_;
 }
 
