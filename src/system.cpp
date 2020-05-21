@@ -21,16 +21,25 @@ using std::vector;
 Processor& System::Cpu() { return cpu_; }
 
 // DONE: Return a container composed of the system's processes
-vector<Process>& System::Processes() { 
+vector<Process>& System::Processes() {
   const auto pids = LinuxParser::Pids();
+  // make sure we don't add too many running processes
+  constexpr std::size_t noel{10};
+  processes_.clear();
+  processes_.reserve(noel);
+  std::size_t counter{1};
   for (const auto pid : pids) {
     Process process(pid);
     // filter out processes with empty /proc/pid/cmdline
     if (process.Command() != std::string("-1")) {
-      processes_.push_back(process);
+      processes_.emplace_back(process);
+      ++counter;
+    }
+    if (counter == noel) {
+      break;
     }
   }
- return processes_;
+  return processes_;
 }
 
 // DONE: Return the system's kernel identifier (string)
